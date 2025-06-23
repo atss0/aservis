@@ -12,6 +12,7 @@ interface ProfileMenuItemProps {
   onPress: () => void
   color?: string
   showBadge?: boolean
+  disabled?: boolean
 }
 
 const ProfileMenuItem: React.FC<ProfileMenuItemProps> = ({
@@ -21,21 +22,38 @@ const ProfileMenuItem: React.FC<ProfileMenuItemProps> = ({
   onPress,
   color = Colors.neutral.grey5,
   showBadge = false,
+  disabled = false,
 }) => {
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={[styles.container, disabled && styles.disabledContainer]}
+      onPress={disabled ? undefined : onPress}
+      activeOpacity={disabled ? 1 : 0.7}
+      disabled={disabled}
+    >
       <View style={[styles.iconContainer, { backgroundColor: `${color}15` }]}>
-        <Iconify icon={icon} size={wScale(20)} color={color} />
+        <Iconify icon={icon} size={wScale(20)} color={disabled ? Colors.neutral.grey3 : color} />
       </View>
 
       <View style={styles.contentContainer}>
-        <Text style={[styles.title, { color, marginBottom: subtitle ? hScale(4) : 0 }]}>{title}</Text>
-        {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+        <Text
+          style={[
+            styles.title,
+            { color: disabled ? Colors.neutral.grey3 : color, marginBottom: subtitle ? hScale(4) : 0 },
+          ]}
+        >
+          {title}
+        </Text>
+        {subtitle && <Text style={[styles.subtitle, disabled && styles.disabledText]}>{subtitle}</Text>}
       </View>
 
       <View style={styles.rightContainer}>
         {showBadge && <View style={styles.badge} />}
-        <Iconify icon="mdi:chevron-right" size={wScale(20)} color={Colors.neutral.grey4} />
+        <Iconify
+          icon="mdi:chevron-right"
+          size={wScale(20)}
+          color={disabled ? Colors.neutral.grey3 : Colors.neutral.grey4}
+        />
       </View>
     </TouchableOpacity>
   )
@@ -82,7 +100,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.status.error,
     marginRight: wScale(8),
   },
+  disabledContainer: {
+    opacity: 0.6,
+  },
+  disabledText: {
+    color: Colors.neutral.grey3,
+  },
 })
 
 export default ProfileMenuItem
-

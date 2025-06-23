@@ -4,6 +4,7 @@ import { Iconify } from "react-native-iconify"
 import Colors from "../styles/Colors"
 import { FontFamily, FontSizes } from "../styles/Fonts"
 import { wScale, hScale } from "../styles/Scaler"
+import { addHours } from "../utils/time"
 
 interface TripHistoryCardProps {
   date: string
@@ -73,13 +74,13 @@ const TripHistoryCard: React.FC<TripHistoryCardProps> = ({
           <View style={styles.timeItem}>
             <Iconify icon="mdi:arrow-up-circle" size={wScale(16)} color={Colors.primary.main} />
             <Text style={styles.timeLabel}>Alış:</Text>
-            <Text style={styles.timeValue}>{pickupTime}</Text>
+            <Text style={styles.timeValue}>{addHours(pickupTime)}</Text>
           </View>
 
           <View style={styles.timeItem}>
             <Iconify icon="mdi:arrow-down-circle" size={wScale(16)} color={Colors.secondary.main} />
             <Text style={styles.timeLabel}>Bırakış:</Text>
-            <Text style={styles.timeValue}>{dropoffTime}</Text>
+            <Text style={styles.timeValue}>{addHours(dropoffTime)}</Text>
           </View>
         </View>
 

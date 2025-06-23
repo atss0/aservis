@@ -1,11 +1,11 @@
 import React from 'react';
-import { 
-  TouchableOpacity, 
-  Text, 
-  StyleSheet, 
-  ActivityIndicator, 
-  ViewStyle, 
-  TextStyle 
+import {
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  ViewStyle,
+  TextStyle
 } from 'react-native';
 import { Iconify } from 'react-native-iconify';
 import Colors from '../styles/Colors';
@@ -92,18 +92,18 @@ const CustomButton: React.FC<CustomButtonProps> = ({
       activeOpacity={0.7}
     >
       {loading ? (
-        <ActivityIndicator 
-          color={type === 'outline' || type === 'text' ? Colors.primary.main : Colors.neutral.white} 
-          size="small" 
+        <ActivityIndicator
+          color={type === 'outline' || type === 'text' ? Colors.primary.main : Colors.neutral.white}
+          size="small"
         />
       ) : (
         <>
           {icon && (
-            <Iconify 
-              icon={icon} 
-              size={wScale(20)} 
-              color={type === 'outline' || type === 'text' ? Colors.primary.main : Colors.neutral.white} 
-              style={styles.icon} 
+            <Iconify
+              icon={icon}
+              size={wScale(20)}
+              color={type === 'outline' || type === 'text' ? Colors.primary.main : Colors.neutral.white}
+              style={styles.icon}
             />
           )}
           <Text style={[getTextStyle(), textStyle]}>{title}</Text>

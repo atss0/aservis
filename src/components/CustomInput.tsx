@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  TextInput, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity 
+import {
+  View,
+  TextInput,
+  Text,
+  StyleSheet,
+  TouchableOpacity
 } from 'react-native';
 import { Iconify } from 'react-native-iconify';
 import Colors from '../styles/Colors';
@@ -38,18 +38,18 @@ const CustomInput: React.FC<CustomInputProps> = ({
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
-      <View 
+      <View
         style={[
-          styles.inputContainer, 
+          styles.inputContainer,
           isFocused && styles.inputFocused,
           error ? styles.inputError : null
         ]}
       >
         {icon && (
-          <Iconify 
-            icon={icon} 
-            size={wScale(20)} 
-            color={isFocused ? Colors.primary.main : Colors.neutral.grey4} 
+          <Iconify
+            icon={icon}
+            size={wScale(20)}
+            color={isFocused ? Colors.primary.main : Colors.neutral.grey4}
             style={styles.icon}
           />
         )}
@@ -65,13 +65,13 @@ const CustomInput: React.FC<CustomInputProps> = ({
           onBlur={() => setIsFocused(false)}
         />
         {secureTextEntry && (
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => setIsPasswordVisible(!isPasswordVisible)}
             style={styles.eyeIcon}
           >
-            <Iconify 
-              icon={isPasswordVisible ? 'mdi:eye-off' : 'mdi:eye'} 
-              size={wScale(20)} 
+            <Iconify
+              icon={isPasswordVisible ? 'mdi:eye-off' : 'mdi:eye'}
+              size={wScale(20)}
               color={Colors.neutral.grey4}
             />
           </TouchableOpacity>

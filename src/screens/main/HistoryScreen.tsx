@@ -18,87 +18,91 @@ import HistoryFilter from "../../components/HistoryFilter"
 import Colors from "../../styles/Colors"
 import { FontFamily, FontSizes } from "../../styles/Fonts"
 import { wScale, hScale } from "../../styles/Scaler"
+import axios from "axios"
+import { API_URL } from "@env"
+import storage from "../../storage"
+import { useSelector } from "react-redux"
 
-// Örnek veri
-const DUMMY_TRIPS = [
-  {
-    id: "1",
-    date: "12 May",
-    pickupTime: "07:30",
-    dropoffTime: "08:15",
-    driverName: "Ahmet Yılmaz",
-    status: "onTime",
-  },
-  {
-    id: "2",
-    date: "11 May",
-    pickupTime: "07:35",
-    dropoffTime: "08:20",
-    driverName: "Ahmet Yılmaz",
-    status: "delayed",
-  },
-  {
-    id: "3",
-    date: "10 May",
-    pickupTime: "07:30",
-    dropoffTime: "08:10",
-    driverName: "Mehmet Demir",
-    status: "onTime",
-  },
-  {
-    id: "4",
-    date: "9 May",
-    pickupTime: "07:30",
-    dropoffTime: "08:15",
-    driverName: "Ahmet Yılmaz",
-    status: "onTime",
-  },
-  {
-    id: "5",
-    date: "8 May",
-    pickupTime: "00:00",
-    dropoffTime: "00:00",
-    driverName: "Ahmet Yılmaz",
-    status: "cancelled",
-  },
-  {
-    id: "6",
-    date: "7 May",
-    pickupTime: "07:30",
-    dropoffTime: "08:15",
-    driverName: "Mehmet Demir",
-    status: "onTime",
-  },
-  {
-    id: "7",
-    date: "6 May",
-    pickupTime: "07:40",
-    dropoffTime: "08:30",
-    driverName: "Ahmet Yılmaz",
-    status: "delayed",
-  },
-  {
-    id: "8",
-    date: "5 May",
-    pickupTime: "07:30",
-    dropoffTime: "08:15",
-    driverName: "Mehmet Demir",
-    status: "onTime",
-  },
-]
+type ApiRide = {
+  id: number; vehicle: { plate_number: string }
+  started_at: string; ended_at: string | null; status: "active" | "completed"
+}
+
+type Trip = {                       // ekranın kullandığı sade model
+  id: string
+  date: string            // “22 Haz” gibi
+  pickupTime: string       // HH:mm
+  dropoffTime: string       // HH:mm veya “—”
+  driverName: string       // elimizde yok; plaka gösterelim
+  status: "active" | "completed"
+}
 
 const HistoryScreen = ({ navigation }: any) => {
-  const [trips, setTrips] = useState(DUMMY_TRIPS)
-  const [filteredTrips, setFilteredTrips] = useState(DUMMY_TRIPS)
+  const [trips, setTrips] = useState<any>([])
+  const [filteredTrips, setFilteredTrips] = useState<any>(null)
   const [activeFilter, setActiveFilter] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(false)
-  const [monthlyStats, setMonthlyStats] = useState({
-    total: 0,
-    onTime: 0,
-    delayed: 0,
-    cancelled: 0,
-  })
+  const userState = useSelector((state: any) => state.User)
+  const childState = useSelector((state: any) => state.Child)
+
+  useEffect(() => {
+    let isMounted = true;
+  
+    const fetchRides = async () => {
+      setLoading(true);
+  
+      try {
+        /* 1️⃣ – tüm çocuklara API çağrıları */
+        const calls = childState.children.map((child: any) =>
+          axios.get<{rides: ApiRide[]}>(
+            `${API_URL}/parent/child/${child.id}/rides`,
+            { headers:{ Authorization:`Bearer ${userState.token}` } }
+          ).then(res => ({ childId: child.id, rides: res.data.rides }))
+        );
+  
+        const responses = await Promise.all(calls);
+  
+        /* 2️⃣ – tekrar etmeyen Trip listesi oluştur */
+        const uniq = new Map<string, Trip>();     // key = rideId-childId
+  
+        responses.forEach(({ childId, rides }) => {
+          rides.forEach((r: any) => {
+            const key = `${r.id}-${childId}`;
+            if (uniq.has(key)) return;            // zaten eklenmiş
+  
+            const start = new Date(r.started_at.replace(" ", "T"));
+            const end   = r.ended_at ? new Date(r.ended_at.replace(" ", "T")) : null;
+            const fmt   = (d:Date)=> d.toLocaleTimeString("tr-TR",{hour:"2-digit", minute:"2-digit"});
+  
+            uniq.set(key, {
+              id          : key,                  // FlatList key
+              date        : start.toLocaleDateString("tr-TR",{day:"2-digit", month:"short"}),
+              pickupTime  : fmt(start),
+              dropoffTime : end ? fmt(end) : "—",
+              driverName  : r.vehicle.plate_number,
+              status      : r.status,
+            });
+          });
+        });
+  
+        if (isMounted) {
+          const arr = Array.from(uniq.values())
+            .sort((a,b)=> Number(b.id.split("-")[0]) - Number(a.id.split("-")[0])); // rideId büyükten küçüğe
+          setTrips(arr);
+          setFilteredTrips(arr);
+        }
+      } catch (err:any) {
+        console.log("ride fetch err", err?.response?.data || err.message);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+  
+    fetchRides();
+    return () => { isMounted = false };
+  }, []);        // deps boş; sadece mount’ta çalışsın
+
 
   // Filtreleme ve arama işlemlerini yönet
   useEffect(() => {
@@ -128,18 +132,6 @@ const HistoryScreen = ({ navigation }: any) => {
 
     return () => clearTimeout(timer)
   }, [searchQuery, activeFilter, trips])
-
-  // Aylık istatistikleri hesapla
-  useEffect(() => {
-    const stats = {
-      total: trips.length,
-      onTime: trips.filter((trip) => trip.status === "onTime").length,
-      delayed: trips.filter((trip) => trip.status === "delayed").length,
-      cancelled: trips.filter((trip) => trip.status === "cancelled").length,
-    }
-
-    setMonthlyStats(stats)
-  }, [trips])
 
   // Yolculuk detaylarına git
   const handleTripPress = (tripId: any) => {
@@ -209,38 +201,12 @@ const HistoryScreen = ({ navigation }: any) => {
           ) : null}
         </View>
 
-        {/* Aylık İstatistikler */}
-        <View style={styles.statsContainer}>
-          <Text style={styles.statsTitle}>Mayıs 2023 İstatistikleri</Text>
-          <View style={styles.statsContent}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{monthlyStats.total}</Text>
-              <Text style={styles.statLabel}>Toplam</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: Colors.status.success }]}>{monthlyStats.onTime}</Text>
-              <Text style={styles.statLabel}>Zamanında</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: Colors.status.warning }]}>{monthlyStats.delayed}</Text>
-              <Text style={styles.statLabel}>Gecikmeli</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: Colors.status.error }]}>{monthlyStats.cancelled}</Text>
-              <Text style={styles.statLabel}>İptal</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Filtreler */}
-        <HistoryFilter onFilterChange={handleFilterChange} activeFilter={activeFilter} />
-
         {/* Yolculuk Listesi */}
         {loading ? (
           renderLoading()
         ) : (
           <FlatList
-            data={filteredTrips}
+            data={trips}
             renderItem={renderTripItem}
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}

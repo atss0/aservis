@@ -5,52 +5,59 @@ import Colors from "../styles/Colors"
 import { FontFamily, FontSizes } from "../styles/Fonts"
 import { wScale, hScale } from "../styles/Scaler"
 
+type Status = "Yolda" | "Yaklaşıyor" | "Geldi"
+type Flag = { picked: boolean; dropped: boolean }
+type Flags = Record<number, Flag>        // key = childId
+
 interface BusStatusCardProps {
-  status: "Yolda" | "Yaklaşıyor" | "Geldi"
-  estimatedTime: string
+  status: Status
+  flags: Flags                // ← YENİ
+  getName: (id: number) => string  // ← YENİ (çocuğun adını almak için)
   onPress: () => void
 }
 
-const BusStatusCard: React.FC<BusStatusCardProps> = ({ status, estimatedTime, onPress }) => {
-  // Duruma göre renk ve ikon belirle
-  const getStatusColor = () => {
-    switch (status) {
-      case "Yolda":
-        return Colors.status.info
-      case "Yaklaşıyor":
-        return Colors.status.warning
-      case "Geldi":
-        return Colors.status.success
-      default:
-        return Colors.status.info
-    }
-  }
+/* Yardımcı: rozet metni + rengi */
+const flagMeta = (f: Flag) => {
+  if (f.dropped) return { txt: "İndi", bg: Colors.status.success }
+  if (f.picked) return { txt: "Bindi", bg: Colors.status.info }
+  /* else */                return { txt: "Bekliyor", bg: Colors.status.warning }
+}
 
-  const getStatusIcon = () => {
-    switch (status) {
-      case "Yolda":
-        return "mdi:bus"
-      case "Yaklaşıyor":
-        return "mdi:bus-alert"
-      case "Geldi":
-        return "mdi:bus-stop"
-      default:
-        return "mdi:bus"
-    }
-  }
+const BusStatusCard: React.FC<BusStatusCardProps> = ({ status, flags, getName, onPress }) => {
+  // Duruma göre renk ve ikon belirle
+  const color = {
+    Yolda: Colors.status.info,
+    Yaklaşıyor: Colors.status.warning,
+    Geldi: Colors.status.success,
+  }[status]
+
+  const icon = {
+    Yolda: "mdi:bus",
+    Yaklaşıyor: "mdi:bus-alert",
+    Geldi: "mdi:bus-stop",
+  }[status]
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.9}>
-      <View style={[styles.iconContainer, { backgroundColor: getStatusColor() }]}>
-        <Iconify icon={getStatusIcon()} size={wScale(24)} color={Colors.neutral.white} />
+      <View style={[styles.iconContainer, { backgroundColor: color }]}>
+        <Iconify icon={icon} size={wScale(24)} color={Colors.neutral.white} />
       </View>
 
       <View style={styles.contentContainer}>
         <Text style={styles.statusText}>{status}</Text>
-        <Text style={styles.timeText}>Tahmini varış: {estimatedTime}</Text>
-      </View>
 
-      <Iconify icon="mdi:chevron-right" size={wScale(24)} color={Colors.neutral.grey4} />
+        {Object.entries(flags).map(([cid, f]) => {
+          const meta = flagMeta(f)
+          return (
+            <View key={cid} style={styles.flagRow}>
+              <Text style={styles.flagName}>{getName(+cid)}</Text>
+              <View style={[styles.flagBadge, { backgroundColor: meta.bg }]}>
+                <Text style={styles.flagTxt}>{meta.txt}</Text>
+              </View>
+            </View>
+          )
+        })}
+      </View>
     </TouchableOpacity>
   )
 }
@@ -94,6 +101,10 @@ const styles = StyleSheet.create({
     fontSize: wScale(FontSizes.small),
     color: Colors.neutral.grey4,
   },
+  flagRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: hScale(2) },
+  flagName: { fontFamily: FontFamily.regular, fontSize: wScale(FontSizes.small), color: Colors.neutral.grey5 },
+  flagBadge: { borderRadius: wScale(8), paddingHorizontal: wScale(8), paddingVertical: hScale(2) },
+  flagTxt: { fontFamily: FontFamily.medium, fontSize: wScale(FontSizes.tiny), color: Colors.neutral.white },
 })
 
 export default BusStatusCard

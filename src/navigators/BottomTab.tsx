@@ -20,9 +20,7 @@ const MainTabNavigator = () => {
       }}
     >
       <Tab.Screen name="HistoryStack" component={HistoryStack} />
-      <Tab.Screen name="NotificationsStack" component={NotificationsStack} />
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="PaymentsStack" component={PaymentsStack} />
       <Tab.Screen name="ProfileStack" component={ProfileStack} />
     </Tab.Navigator>
   )

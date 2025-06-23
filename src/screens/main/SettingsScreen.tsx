@@ -9,11 +9,14 @@ import ProfileMenuItem from "../../components/ProfileMenuItem"
 import Colors from "../../styles/Colors"
 import { FontFamily, FontSizes } from "../../styles/Fonts"
 import { wScale, hScale } from "../../styles/Scaler"
+import { useDispatch, useSelector } from "react-redux"
+import { RootState } from "../../redux/store"
+import { setOuterRadius, setInnerRadius } from "../../redux/ApproachSlice"
 
 const SettingsScreen = ({ navigation }: any) => {
   // Yaklaşma daireleri ayarları
-  const [outerRadius, setOuterRadius] = useState(500)
-  const [innerRadius, setInnerRadius] = useState(100)
+  const dispatch = useDispatch()
+  const approachState = useSelector((state: RootState) => state.Approach)
 
   // Bildirim ayarları
   const [notifyApproaching, setNotifyApproaching] = useState(true)
@@ -71,36 +74,28 @@ const SettingsScreen = ({ navigation }: any) => {
           <View style={styles.settingItem}>
             <View style={styles.settingLabelContainer}>
               <Text style={styles.settingLabel}>Dış Daire (Yaklaşıyor)</Text>
-              <Text style={styles.settingValue}>{outerRadius} metre</Text>
+              <Text style={styles.settingValue}>{approachState.outerRadius} metre</Text>
             </View>
             <Slider
-              style={styles.slider}
-              minimumValue={200}
+              value={approachState.outerRadius}
+              minimumValue={100}
               maximumValue={1000}
-              step={50}
-              value={outerRadius}
-              onValueChange={setOuterRadius}
-              minimumTrackTintColor={Colors.primary.main}
-              maximumTrackTintColor={Colors.neutral.grey3}
-              thumbTintColor={Colors.primary.main}
+              step={10}
+              onSlidingComplete={(value) => dispatch(setOuterRadius(value))}
             />
           </View>
 
           <View style={styles.settingItem}>
             <View style={styles.settingLabelContainer}>
               <Text style={styles.settingLabel}>İç Daire (Geldi)</Text>
-              <Text style={styles.settingValue}>{innerRadius} metre</Text>
+              <Text style={styles.settingValue}>{approachState.innerRadius} metre</Text>
             </View>
             <Slider
-              style={styles.slider}
-              minimumValue={50}
-              maximumValue={200}
-              step={10}
-              value={innerRadius}
-              onValueChange={setInnerRadius}
-              minimumTrackTintColor={Colors.primary.main}
-              maximumTrackTintColor={Colors.neutral.grey3}
-              thumbTintColor={Colors.primary.main}
+              value={approachState.innerRadius}
+              minimumValue={20}
+              maximumValue={500}
+              step={5}
+              onSlidingComplete={(value) => dispatch(setInnerRadius(value))}
             />
           </View>
 
